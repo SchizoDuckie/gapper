@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+<head>
+<script src="paper.js"></script>
+</head>
+<body>
+
+<canvas id="myCanvas" width="1000" height="800" style="width:100%: height:100%;border:1px solid black;" ></canvas>
+
+<script type="text/javascript" canvas="myCanvas">
+    // vars
+Array.random = function (myArray) {
+  return myArray[Math.floor(Math.random() * myArray.length)]
+};
+
+ function markRectDone(index) {
+    	rects[index].top.strokeColor = "#F0F";
+    	rects[index].left.strokeColor = "#F0F";
+    	rects[index].bottom.strokeColor = "#F0F";
+    	rects[index].right.strokeColor = "#F0F";
+    } 
+
+   function getPathData(rect) {
+    	console.log(
+			rects[rect].left.getSegments()[0].point.x+','+rects[rect].left.getSegments()[0].point.y+'->'+rects[rect].left.getSegments()[1].point.x+','+rects[rect].left.getSegments()[1].point.y+"\n"+
+			rects[rect].top.getSegments()[0].point.x+','+rects[rect].top.getSegments()[0].point.y+'->'+rects[rect].top.getSegments()[1].point.x+','+rects[rect].top.getSegments()[1].point.y+"\n"+
+			rects[rect].right.getSegments()[0].point.x+','+rects[rect].right.getSegments()[0].point.y+'->'+rects[rect].right.getSegments()[1].point.x+','+rects[rect].right.getSegments()[1].point.y+"\n"+
+			rects[rect].bottom.getSegments()[0].point.x+','+rects[rect].bottom.getSegments()[0].point.y+'->'+rects[rect].bottom.getSegments()[1].point.x+','+rects[rect].bottom.getSegments()[1].point.y+"\n"
+
+		)
+
+	}
+
+			// On each frame, rotate the path by 3 degrees:
+	paper.install(window);
+
+	var lines = {};
+	var rects = {};
+    var connections = {};
+
+	window.onload = function() {
+		paper.setup('myCanvas');
+
+    var canvasWidth = 800;
+    var canvasHeight = 600;
+
+    function addLine(fromX, fromY, toX,toY) {
+    	var coordinate = [fromX,fromY].join('x');
+    	var targetcoordinate = [toX,toY].join('x');
+    	var line, lineIndex = [fromX,fromY,toX ,toY].join('x'), lineIndex2= [toX ,toY,fromX,fromY].join('x');
+    	if (!(lineIndex in lines) && !(lineIndex2 in lines)) {
+    		lines[lineIndex] = lines[lineIndex2] = line = new Path.Line(new Point([fromX,fromY]), new Point([toX,toY]));
+    	} else {
+    		line = lines[lineIndex];
+    	}
+    	line.strokeColor = "#999";
+    	line.strokeWidth = 3;
+    	if(!(coordinate in connections)) {
+    		connections[coordinate] = { };
+    	}
+    	if(!(targetcoordinate in connections)) {
+    		connections[targetcoordinate] = { };
+    	}
+    	if (toX > fromX && toY == fromY) {
+    		connections[coordinate].right = [fromX, fromY, toX,toY, line];
+    		connections[targetcoordinate].left = [toX,toY, fromX, fromY, line];
+    	} else if (toX < fromX && toY == fromY) {
+    		connections[coordinate].left = [fromX, fromY, toX,toY, line];
+    		connections[targetcoordinate].right = [ toX,toY, fromX, fromY, line];
+    	} else if (fromX == toX && fromY < toY) {
+    		connections[coordinate].down =  [fromX, fromY, toX,toY, line];
+    		connections[targetcoordinate].up =  [ toX,toY, fromX, fromY, line];
+    	} else if (fromX == toX && fromY > toY) {
+    		connections[coordinate].up = [fromX, fromY, toX,toY, line];
+    		connections[targetcoordinate].down = [toX,toY, fromX, fromY, line];
+    	} else {
+    		console.log(" Dunno where to put this: : " , x, y, fromX, fromY, path);
+    	}
+
+    	return line;
+    }
+
+    function createRect(divisor, x, y) {
+    	var h = Math.round(canvasHeight / divisor);
+    	var w = Math.round(canvasWidth / divisor);
+
+    	rects[x+'x'+y] = {
+	    	top: addLine(x,y, x+w,y),
+	    	right: addLine(x+w,y, x+w,y+h),
+	    	bottom: addLine(x+w,y+h,x,y+h),
+	    	left: addLine(x,y+h, x,y),
+	    	doneLines: [],
+	    	done:false,
+    	}
+
+    }
+
+    var divisor = 10;
+
+    var starttop = 10;
+    var startleft = 10;
+    var top, left;
+
+    // create a grid
+    for(i=0; i < divisor; i++) {
+    	left = startleft + (Math.round(canvasWidth / divisor) * i);
+    	for(var j = 0; j< divisor; j++) {
+    		top = starttop + (Math.round(canvasHeight / divisor) * j);
+    		createRect(divisor, left, top);
+    	} 
+    	console.log(" All connectiosn made: " , connections);
+    	
+    }
+
+    
+    // draw the circle
+    var circle = new Path.Circle(0,100,4);
+    circle.strokeColor = "#00F";
+    circle.strokeWidth = 4;
+    // target to move to
+    var currentDirection = 'right';
+    
+    var target = connections[startleft+'x'+starttop][currentDirection];
+
+    // how many frame does it take to reach a target
+    var steps = 10;
+
+    // defined vars for onFrame
+    var dX       = 0;
+    var dY       = 0;
+
+    // position circle on path
+    circle.position.x = target[0];
+    circle.position.y = target[1];
+
+
+    function findConnectingTarget(x,y) {
+    	var direction = Array.random(Object.keys(connections[x+'x'+y]));
+    	console.log(" Directions for " , x, y , Object.keys(connections[x+'x'+y]), direction);
+    	return connections[x+'x'+y][direction];
+    	
+    }
+
+    function getNewDirection(connection) {
+    	var directions = Object.keys(connection);
+    	//delete directions[directions.indexOf(currentDirection)];
+    	// make sure that it doesn't turn in the opposite direction
+    	var removals = {
+    		left: 'right',
+    		right: 'left',
+    		up:'down',
+    		down:'up'
+    	}
+    	
+    	directions.splice(directions.indexOf(removals[currentDirection]),1);
+    	currentDirection = Array.random(directions);
+		//console.log("Picked a connection from " , directions, currentDirection, connection[currentDirection]);
+    	return connection[currentDirection];
+    }
+
+    function markLineDone(line) {
+		for(var i in rects) {
+			['top','bottom','left','right'].map(function(direction) {
+				//console.log(rects[i][direction])
+				if(!rects[i].done &&
+					(
+					   (rects[i][direction].getSegments()[0].toString() == line.getSegments()[0].toString() &&
+					 	rects[i][direction].getSegments()[1].toString() == line.getSegments()[1].toString())
+					 	|| 
+						(rects[i][direction].getSegments()[1].toString() == line.getSegments()[0].toString() &&
+					 rects[i][direction].getSegments()[0].toString() == line.getSegments()[1].toString()) 
+					)  && rects[i].doneLines.indexOf(direction) == -1) {
+					rects[i].doneLines.push(direction);
+					if(rects[i].doneLines.length == 4) {
+						rects[i].done = true;
+						console.log(" Rect is done! can now be filled " , rects[i]);
+						console.log(rects[i].left.getSegments()[0].point.y, rects[i].left.getSegments()[1].point.y);
+						var p1 = rects[i].left.getSegments()[0].point.y < rects[i].left.getSegments()[1].point.y ? rects[i].left.getSegments()[0].point : rects[i].left.getSegments()[1].point
+						var p2 = rects[i].right.getSegments()[0].point.y > rects[i].right.getSegments()[1].point.y ? rects[i].right.getSegments()[0].point : rects[i].right.getSegments()[1].point
+						var p = new Shape.Rectangle(p1,p2);
+						p.fillColor = '#abcdef';
+						p.strokeColor ='blue';
+						p.sendToBack();
+					}
+
+				}
+			})
+		}
+		line.strokeColor = "#F0F";
+    }
+
+ 
+    
+   
+
+	view.onFrame = function(event) {
+    	
+        //check if cricle reached its target
+        if (circle.position.x == target[0] && circle.position.y == target[1]) {
+        	
+        	//console.log(" Find a new target!" , target);
+        	markLineDone(target[4]);
+
+        	var connection = connections[target[0]+'x'+target[1]];
+        	target = getNewDirection(connection);
+
+        	target[0] = (target[0] > circle.position.x) ? target[0] : target[2];
+        	target[1] = (target[1] > circle.position.y) ? target[1] : target[3];
+            
+            dX = Math.round((target[0] - circle.position.x)/steps);
+            dY = Math.round((target[1] - circle.position.y)/steps);
+
+        }
+
+        // do the movement
+        circle.position.x += dX;
+        circle.position.y += dY;
+    }
+
+}
+
+</script>	
+</head>
+<body>
+
+
+</body>
+</html>
