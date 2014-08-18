@@ -5,6 +5,7 @@
     score: 0,
     lives: 3,
     level: 1,
+    gameover: false,
 
     initialize: function(game) {
         this.elements = {
@@ -17,9 +18,17 @@
             this.lives--;
             this.update();
             if(this.lives == 0) {
+                this.gameover = true;
                 game.fireEvent('game:over');
             } else {
                 game.fireEvent('live:lost');
+                game.bot.setPosition(game.grid.getBotStartPosition());
+                game.bot.setTarget(game.grid.getBotStartGridPoint(), 'left');
+                game.player.setPosition(game.grid.getStartPosition());
+                game.player.setTarget(game.grid.getStartGridPoint(),'up');
+                game.player.direction = 'up';
+                game.gameStep();
+
             }
         }.bind(this));
     },
@@ -40,6 +49,7 @@
  var Game = new Class( {
  	Implements: [Options, Events],
  	grid: null,
+    score: null,
  	options: {
  		steps: 10,
  	},
@@ -123,14 +133,24 @@
     	var direction = Array.random(directions);
     	console.log("new bot direction: " ,direction, currentDirection, directions, connection)
     	return direction;
-    
  	},
 
- 	gameStep: function(event) {
-    	
-    	this.bot.moveStep();
-    	this.player.moveStep()
+    collisionDetect: function() {
+       var p = this.player.avatar.position;
+       var b = this.bot.avatar.position;
+       var pdx = p.x > b.x ? parseInt(p.x - b.x) : parseInt(b.x - p.x) ;
+       var pdy = p.y > p.y ? parseInt(p.y - b.y) : parseInt(b.y - p.y);
+       return pdx > -5 && pdx < 5  && pdy > -5 && pdy < 5
+    },
 
+ 	gameStep: function(event) {
+        if(this.score.gameover) return;
+        if(this.collisionDetect()) {
+            this.fireEvent('collision')
+        }
+        this.bot.moveStep();
+    	this.player.moveStep()
+       
     },
 
 

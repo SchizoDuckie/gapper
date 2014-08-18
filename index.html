@@ -21,7 +21,7 @@ html,body {
 }
 .score em {
     position: absolute;
-    right: 100px;
+    right: 2%;
 }
 </style>
 
@@ -54,7 +54,7 @@ Array.random = function (myArray) {
         grid: {
             canvasWidth: canvas.width -20,
             canvasHeight: canvas.height -20,
-            divisor: 6
+            divisor: 5
         }
         
     });
@@ -67,6 +67,7 @@ Array.random = function (myArray) {
 <body>
 
 <div class='score'>
+<h1>Gapper</h1>
 <p><strong>Score</strong> <em id='score'>0</em></p>
 <p><strong>Level</strong> <em id='level'>1</em></p>
 <p><strong>Lives</strong> <em id='lives'>3</em></p>

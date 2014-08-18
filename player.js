@@ -89,7 +89,7 @@
             return;
         	
         } else {
-            console.log(" No match: ", dx, dy, ax, ay, tx, ty);
+            //console.log(" No match: ", dx, dy, ax, ay, tx, ty);
         }
 
         // do the movement
