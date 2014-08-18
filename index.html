@@ -65,18 +65,16 @@ Array.random = function (myArray) {
  		console.log(" Game class initialized!" );
 
  		this.grid = new Grid({
- 			divisor: 15
+ 			divisor: 5  
  		});
  		this.bot = new Player({
- 			steps: this.options.steps
+ 			steps: 30,
+            customType: function() {
+                return new Path.Star(new Point(0,0), 5, 0,10);
+            } 
  		});
  		this.bot.setPosition(this.grid.getBotStartPosition());
  		this.bot.setTarget(this.grid.getBotStartGridPoint(), 'left');
-		
- 		this.keyboard = new KeyboardHandler();
-        this.keyboard.addEvent('change', function(direction) {
-            this.player.nextDirection = direction;
-        }.bind(this))
 
  		this.bot.addEvent('line:done', function(target) {
  			// find a new direction based on the target's points
@@ -87,7 +85,7 @@ Array.random = function (myArray) {
  		}.bind(this)); 
 
  		this.player = new Player({
- 			steps: this.options.steps
+ 			steps: 10
  		});
  		this.player.setPosition(this.grid.getStartPosition());
  		this.player.setTarget(this.grid.getStartGridPoint(), 'down');
@@ -101,8 +99,16 @@ Array.random = function (myArray) {
     		
     		this.player.setTarget(connection, this.player.direction);
     		
-    		
  		}.bind(this));
+
+        this.player.addEvent('rect:done', function(rect) {
+            debugger;
+        });
+
+        this.keyboard = new KeyboardHandler();
+        this.keyboard.addEvent('change', function(direction) {
+            this.player.nextDirection = direction;
+        }.bind(this))
 
 
  		view.onFrame = this.gameStep.bind(this)
@@ -145,20 +151,19 @@ Array.random = function (myArray) {
  	nextDirection: false,
  	directionX: 1,
  	directionY: 0,
- 	fastEvents: {
-
- 	},
 
  	options: {
- 		steps: 5    
+ 		steps: 5,
+        color: '#00F',
+        strokeWidth: 4
  	},
 
 
  	initialize: function(options) {
- 		this.setOptions(options,this.options);
-	    this.avatar = new Path.Circle(0,100,4);
-	    this.avatar.strokeColor = "#00F";
-	    this.avatar.strokeWidth = 4;
+ 		this.setOptions(this.options,options);
+	    this.avatar = this.options.customType ? this.options.customType() : new Path.Circle(0,100,4);
+	    this.avatar.strokeColor = this.options.color;
+	    this.avatar.strokeWidth = this.options.strokeWidth;
  	},
 
  	setTarget: function(target, direction) {
@@ -273,7 +278,7 @@ Array.random = function (myArray) {
  	connections: {},
 
  	initialize: function(options) {
- 		this.setOptions(options, this.options);
+ 		this.setOptions(this.options,options);
  		this.draw();
  	},
 
