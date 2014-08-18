@@ -3,8 +3,8 @@ var Grid = new Class({
  	options: {
  		canvasWidth: 800,
  		canvasHeight: 600,
- 		startTop: 5,
- 		startLeft: 5,
+ 		startTop: 10,
+ 		startLeft: 10,
  		divisor: 10
  	},
 
@@ -58,6 +58,7 @@ var Grid = new Class({
 	    	right: this.addLine(x+w,y, x+w,y+h),
 	    	bottom: this.addLine(x+w,y+h,x,y+h),
 	    	left: this.addLine(x,y+h, x,y),
+            score: 50,
 	    	doneLines: [],
 	    	done:false,
     	}
@@ -142,6 +143,7 @@ var Grid = new Class({
 		p.fillColor = '#abcdef';
 		p.strokeColor ='blue';
 		p.sendToBack();
+        this.fireEvent('rect:done', [index,this.rects[index]]);
     }
 
 

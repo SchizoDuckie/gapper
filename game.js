@@ -1,4 +1,42 @@
 
+ var Score = new Class({
+    Implements: [Options, Events],
+
+    score: 0,
+    lives: 3,
+    level: 1,
+
+    initialize: function(game) {
+        this.elements = {
+            'score' : $('score'),
+            'lives' : $('lives'),
+            'level' : $('level')
+        };
+
+        game.addEvent('collision', function() {
+            this.lives--;
+            this.update();
+            if(this.lives == 0) {
+                game.fireEvent('game:over');
+            } else {
+                game.fireEvent('live:lost');
+            }
+        }.bind(this));
+    },
+
+    add: function(index, rect) {
+        console.log('add!' , index,rect);
+        this.score += rect.score;
+        this.update();
+    },
+
+    update: function() {
+        for(var i in this.elements) {
+            this.elements[i].set('html', this[i]);
+        }
+    }
+
+ })
  var Game = new Class( {
  	Implements: [Options, Events],
  	grid: null,
@@ -11,7 +49,7 @@
  	initialize: function(options) {
  		this.setOptions(options,this.options);
  		console.log(" Game class initialized!" );
-
+        this.score = new Score(this);
  		this.grid = new Grid(options.grid);
  		this.bot = new Player({
  			steps: 30,
@@ -47,9 +85,11 @@
     		
  		}.bind(this));
 
-        this.player.addEvent('rect:done', function(rect) {
-            debugger;
-        });
+        this.grid.addEvent('rect:done', function(index, rect) {
+            console.log('rect done!');
+            this.add(index,rect);
+        }.bind(this.score));
+
 
         this.keyboard = new KeyboardHandler();
         this.keyboard.addEvent('change', function(direction) {
@@ -68,7 +108,6 @@
  	},
 
  	findNewBotDirection: function(connection, currentDirection) {
-
 		var directions = Object.keys(connection);
     	//delete directions[directions.indexOf(currentDirection)];
     	// make sure that it doesn't turn in the opposite direction
@@ -79,9 +118,10 @@
     		down:'up'
     	}
     	
+        //console.log("Find new direction: ",connection,currentDirection,directions);
     	directions.splice(directions.indexOf(removals[currentDirection]),1);
     	var direction = Array.random(directions);
-    	console.log("new bot direction: " , direction, directions)
+    	console.log("new bot direction: " ,direction, currentDirection, directions, connection)
     	return direction;
     
  	},

@@ -8,10 +8,23 @@ html,body {
     height:100%;
     width:100%;
     overflow: hidden;
+    font-family: verdana;
+}
+.score {
+    position :absolute;
+    right: 2%;
+    top: 15%;
+    width:18%;
+    border: 1px solid black;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.score em {
+    position: absolute;
+    right: 100px;
 }
 </style>
-</head>
-<body>
+
 <script src="game.js"></script>
 <script src="grid.js"></script>
 <script src="player.js"></script>
@@ -28,22 +41,19 @@ Array.random = function (myArray) {
  $(window).addEvent('load' , function() {
 
     var canvas = document.createElement('canvas');
-    canvas.width = (document.body.scrollWidth -30) /5 * 4;
+    canvas.width = (document.body.scrollWidth - 50) /5 * 4;
     canvas.height = (document.body.scrollHeight - 50) / 5 *4;
     canvas.id = 'myCanvas';
     canvas.style.position = 'absolute';
-    
     document.body.appendChild(canvas);
-
- 	console.log(" Document is ready!" );
 
  	paper.install(window);
 	paper.setup('myCanvas');
 
  	window.game = new Game({
         grid: {
-            canvasWidth: canvas.width-10,
-            canvasHeight: canvas.height-10,
+            canvasWidth: canvas.width -20,
+            canvasHeight: canvas.height -20,
             divisor: 6
         }
         
@@ -56,6 +66,11 @@ Array.random = function (myArray) {
 </head>
 <body>
 
+<div class='score'>
+<p><strong>Score</strong> <em id='score'>0</em></p>
+<p><strong>Level</strong> <em id='level'>1</em></p>
+<p><strong>Lives</strong> <em id='lives'>3</em></p>
+</div>
 
 </body>
 </html>

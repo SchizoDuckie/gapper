@@ -22,7 +22,6 @@
  	},
 
  	setTarget: function(target, direction) {
- 		console.log(" Set player target gridpoint " , direction, target);
  		this.target = target;
  		if(direction && direction in target) {
  			this.setDirection(direction);
@@ -34,21 +33,21 @@
  	},
 
  	setPosition: function(pos) {
- 		console.log(" Set player positoin: " , pos);
  		this.avatar.position.x = pos.x;
  		this.avatar.position.y = pos.y;
  	},
 
  	setDirection: function(direction) {
  		console.log("Settingg direction" , direction);
-        if(!(direction in this.target)) {
+        if(Object.keys(this.target).indexOf(direction) == -1) {
             console.log(" Impossible direction change:" , direction)
             if(this.nextDirection) {
                 var d = this.nextDirection;
                 this.nextDirection = null;
                 return this.setDirection(d);
+            } else {
+                return;
             }
-            return;
         }
  		this.direction = direction;
  		var t = this.target[direction];
@@ -58,36 +57,26 @@
 
         this.directionX = (this.target[this.direction][0] - this.avatar.position.x)/this.options.steps;
         this.directionY = (this.target[this.direction][1] - this.avatar.position.y)/this.options.steps;
-        console.log("Direction set: ", this.options.steps, this.avatar.position.x,this.avatar.position.y, this.directionX, this.directionY, this.target[this.direction]);
- 	},
+    },
 
 
  	moveStep: function() {
  		if (!this.target || !(this.direction in this.target)) {
- 			console.log(' Do not move!' , this.target, this.direction);
+ 			//console.log(' Do not move!' , this.target, this.direction);
  			if(this.nextDirection) {
 	 			this.setDirection(this.nextDirection);
 		    	this.nextDirection = false;
 	    	}
+            return;
  			
  		}
  		if(!(this.direction in this.target)) {
-            console.log(" No direction ", this.direction, ' in ', this.target);
- 			return;
+            return;
  		}
-        var dx = this.directionX, dy = this.directionY, ax = this.avatar.position.x, ay = this.avatar.position.y, tx = this.target[this.direction][0], ty = this.target[this.direction][1];
+        var dx = this.directionX, dy = this.directionY, ax = Math.floor(this.avatar.position.x), ay = Math.floor(this.avatar.position.y), tx = Math.floor(this.target[this.direction][0]), ty = Math.floor(this.target[this.direction][1]);
 
-        if (
-            ((dx == 0 && dy < 0 && ay <= ty) ||
-            (dx == 0 && dy > 0 && ay >= ty) ||
-            (dx <= 0 && dy == 0 && ay <= ty) ||
-            (dx >= 0 && dy == 0 && ay >= ty) ) && (
-            (dy == 0 && dx < 0 && ax <= tx) ||
-            (dy == 0 && dx > 0 && ax >= tx) ||
-            (dy <= 0 && dx == 0 && ax <= tx) ||
-            (dy >= 0 && dx == 0 && ax >= tx))) {
+        if ((dx > 0 && ax >= tx) || (dx < 0 && ax <= tx) || (dy > 0 && ay >= ty) || (dy < 0 && ay <= ty)) {
 
-           console.log(" Find a new target!" , this.target);
             this.avatar.position.x = this.target[this.direction][0];
             this.avatar.position.y = this.target[this.direction][1];
             
@@ -100,18 +89,11 @@
             return;
         	
         } else {
-            /*console.log(" No match: ", 
-                this.avatar.position.x,
-                this.target[this.direction][0], 
-                this.directionX,
-                this.avatar.position.y,
-                this.target[this.direction][1], 
-                this.directionY
-                ); */
+            console.log(" No match: ", dx, dy, ax, ay, tx, ty);
         }
 
         // do the movement
-
+        //this.avatar.rotate(2);
         this.avatar.position.x += this.directionX;
         this.avatar.position.y += this.directionY;
     }
