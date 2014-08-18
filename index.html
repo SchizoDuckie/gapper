@@ -3,13 +3,21 @@
 <head>
 <script src="paper.js"></script>
 <script src="mootools.js"></script>
-
+<style type="text/css">
+html,body {
+    height:100%;
+    width:100%;
+    overflow: hidden;
+}
+</style>
 </head>
 <body>
+<script src="game.js"></script>
+<script src="grid.js"></script>
+<script src="player.js"></script>
+<script src="keyboardhandler.js"></script>
 
-<canvas id="myCanvas" width="1000" height="800" style="width:100%: height:100%;border:1px solid black;" ></canvas>
-
-<script type="text/javascript" canvas="myCanvas">
+<script type="text/javascript">
     // vars
 Array.random = function (myArray) {
   return myArray[Math.floor(Math.random() * myArray.length)]
@@ -19,418 +27,29 @@ Array.random = function (myArray) {
 
  $(window).addEvent('load' , function() {
 
+    var canvas = document.createElement('canvas');
+    canvas.width = (document.body.scrollWidth -30) /5 * 4;
+    canvas.height = (document.body.scrollHeight - 50) / 5 *4;
+    canvas.id = 'myCanvas';
+    canvas.style.position = 'absolute';
+    
+    document.body.appendChild(canvas);
+
  	console.log(" Document is ready!" );
 
  	paper.install(window);
 	paper.setup('myCanvas');
 
- 	window.game = new Game();
-
- });
-
- var KeyboardHandler = new Class({
- 	Implements: [Events],
-
- 	direction : null,
- 	initialize: function() {
-
- 		$(window).addEvent('keydown', function(event) {
- 			console.log("keydown!" , event);
-		 	switch(event.key) {
-		 		case 'left':
-		 		case 'right':
-		 		case 'up':
-		 		case 'down':
-		 		console.log('found!' , event.key);
-    		 		this.direction = event.key;
-    		 		this.fireEvent('change', [this.direction]);
-    		  		event.stop();
-		 		break;
-		 	}
-		}.bind(this));
- 	}
- });
-
- var Game = new Class( {
- 	Implements: [Options, Events],
- 	grid: null,
- 	options: {
- 		steps: 10,
- 	},
- 	bot: null,
- 	player: null,
-
- 	initialize: function(options) {
- 		this.setOptions(options,this.options);
- 		console.log(" Game class initialized!" );
-
- 		this.grid = new Grid({
- 			divisor: 5  
- 		});
- 		this.bot = new Player({
- 			steps: 30,
-            customType: function() {
-                return new Path.Star(new Point(0,0), 5, 0,10);
-            } 
- 		});
- 		this.bot.setPosition(this.grid.getBotStartPosition());
- 		this.bot.setTarget(this.grid.getBotStartGridPoint(), 'left');
-
- 		this.bot.addEvent('line:done', function(target) {
- 			// find a new direction based on the target's points
- 			var target = this.bot.getTarget();
- 			var connection = this.grid.connections[target[0]+'x'+target[1]];
-    		this.bot.setTarget(connection, this.findNewBotDirection(connection, this.bot.direction));
+ 	window.game = new Game({
+        grid: {
+            canvasWidth: canvas.width-10,
+            canvasHeight: canvas.height-10,
+            divisor: 6
+        }
         
- 		}.bind(this)); 
-
- 		this.player = new Player({
- 			steps: 10
- 		});
- 		this.player.setPosition(this.grid.getStartPosition());
- 		this.player.setTarget(this.grid.getStartGridPoint(), 'down');
-		
-
- 		this.player.addEvent('line:done', function(target) {
- 			this.grid.markLineDone(target);
- 			// find a new direction based on the target's points
- 			var target = this.player.getTarget();
- 			var connection = this.grid.connections[target[0]+'x'+target[1]];
-    		
-    		this.player.setTarget(connection, this.player.direction);
-    		
- 		}.bind(this));
-
-        this.player.addEvent('rect:done', function(rect) {
-            debugger;
-        });
-
-        this.keyboard = new KeyboardHandler();
-        this.keyboard.addEvent('change', function(direction) {
-            this.player.nextDirection = direction;
-        }.bind(this))
-
-
- 		view.onFrame = this.gameStep.bind(this)
- 	},
-
- 	findNewBotDirection: function(connection, currentDirection) {
-
-		var directions = Object.keys(connection);
-    	//delete directions[directions.indexOf(currentDirection)];
-    	// make sure that it doesn't turn in the opposite direction
-    	var removals = {
-    		left: 'right',
-    		right: 'left',
-    		up:'down',
-    		down:'up'
-    	}
-    	
-    	directions.splice(directions.indexOf(removals[currentDirection]),1);
-    	var direction = Array.random(directions);
-    	console.log("new bot direction: " , direction, directions)
-    	return direction;
-    
- 	},
-
- 	gameStep: function(event) {
-    	
-    	this.bot.moveStep();
-    	this.player.moveStep()
-
-    },
-
+    });
 
  });
-
- var Player = new Class({
- 	Implements: [Options, Events],
- 	avatar: null,
- 	target: null,
- 	direction: 'right',
- 	nextDirection: false,
- 	directionX: 1,
- 	directionY: 0,
-
- 	options: {
- 		steps: 5,
-        color: '#00F',
-        strokeWidth: 4
- 	},
-
-
- 	initialize: function(options) {
- 		this.setOptions(this.options,options);
-	    this.avatar = this.options.customType ? this.options.customType() : new Path.Circle(0,100,4);
-	    this.avatar.strokeColor = this.options.color;
-	    this.avatar.strokeWidth = this.options.strokeWidth;
- 	},
-
- 	setTarget: function(target, direction) {
- 		console.log(" Set player target gridpoint " , direction, target);
- 		this.target = target;
- 		if(direction && direction in target) {
- 			this.setDirection(direction);
- 		}
- 	},
-
- 	getTarget: function() {
- 		return this.target[this.direction];
- 	},
-
- 	setPosition: function(pos) {
- 		console.log(" Set player positoin: " , pos);
- 		this.avatar.position.x = pos.x;
- 		this.avatar.position.y = pos.y;
- 	},
-
- 	setDirection: function(direction) {
- 		console.log("Settingg direction" , direction);
-        if(!(direction in this.target)) {
-            console.log(" Impossible direction change:" , direction)
-            if(this.nextDirection) {
-                var d = this.nextDirection;
-                this.nextDirection = null;
-                return this.setDirection(d);
-            }
-            return;
-        }
- 		this.direction = direction;
- 		var t = this.target[direction];
-
- 		this.target[this.direction][0] = (t[0] > this.avatar.position.x) ? t[0] : t[2]; // determine from/to direction. Swap when needed.
-    	this.target[this.direction][1] = (t[1] > this.avatar.position.y) ? t[1] : t[3];
-
-        this.directionX = (this.target[this.direction][0] - this.avatar.position.x)/this.options.steps;
-        this.directionY = (this.target[this.direction][1] - this.avatar.position.y)/this.options.steps;
-        console.log("Direction set: ", this.options.steps, this.avatar.position.x,this.avatar.position.y, this.directionX, this.directionY, this.target[this.direction]);
- 	},
-
-
- 	moveStep: function() {
- 		if (!this.target || !(this.direction in this.target)) {
- 			console.log(' Do not move!' , this.target, this.direction);
- 			if(this.nextDirection) {
-	 			this.setDirection(this.nextDirection);
-		    	this.nextDirection = false;
-	    	}
- 			
- 		}
- 		if(!(this.direction in this.target)) {
-            console.log(" No direction ", this.direction, ' in ', this.target);
- 			return;
- 		}
-        var dx = this.directionX, dy = this.directionY, ax = this.avatar.position.x, ay = this.avatar.position.y, tx = this.target[this.direction][0], ty = this.target[this.direction][1];
-
-        if (
-            ((dx == 0 && dy < 0 && ay <= ty) ||
-            (dx == 0 && dy > 0 && ay >= ty) ||
-            (dx <= 0 && dy == 0 && ay <= ty) ||
-            (dx >= 0 && dy == 0 && ay >= ty) ) && (
-            (dy == 0 && dx < 0 && ax <= tx) ||
-            (dy == 0 && dx > 0 && ax >= tx) ||
-            (dy <= 0 && dx == 0 && ax <= tx) ||
-            (dy >= 0 && dx == 0 && ax >= tx))) {
-
-           console.log(" Find a new target!" , this.target);
-            this.avatar.position.x = this.target[this.direction][0];
-            this.avatar.position.y = this.target[this.direction][1];
-            
-        	this.fireEvent('line:done', [this.getTarget()]);
-        	
- 			if(this.nextDirection) {
-	 			this.setDirection(this.nextDirection);
-		    	this.nextDirection = false;
-	    	}
-            return;
-        	
-        } else {
-            console.log(" No match: ", 
-                this.avatar.position.x,
-                this.target[this.direction][0], 
-                this.directionX,
-                this.avatar.position.y,
-                this.target[this.direction][1], 
-                this.directionY
-                );
-        }
-
-        // do the movement
-
-        this.avatar.position.x += this.directionX;
-        this.avatar.position.y += this.directionY;
-    }
-
- });
-
- var Grid = new Class({
- 	Implements: [Options, Events],
- 	options: {
- 		canvasWidth: 800,
- 		canvasHeight: 600,
- 		startTop: 10,
- 		startLeft: 10,
- 		divisor: 10
- 	},
-
- 	lines: {},
- 	rects: {},
- 	connections: {},
-
- 	initialize: function(options) {
- 		this.setOptions(this.options,options);
- 		this.draw();
- 	},
-
- 	draw: function() {
-	    var top, left;
-
-	    // create a grid
-	    for(i=0; i < this.options.divisor; i++) {
-	    	left = this.options.startLeft + (Math.round(this.options.canvasWidth / this.options.divisor) * i);
-	    	for(var j = 0; j< this.options.divisor; j++) {
-	    		top = this.options.startTop + (Math.round(this.options.canvasHeight / this.options.divisor) * j);
-	    		this.createRect(this.options.divisor, left, top);
-	    	} 
-	    	console.log("All connections made: " , this.connections);
-	    }
- 	},
-
- 	getBotStartGridPoint: function(direction) {
- 		var keys = Object.keys(this.connections);
- 		return this.connections[keys[keys.length -1]];
- 	},
-
-
- 	getStartGridPoint: function(direction) {
- 		return this.connections[this.options.startLeft+'x'+this.options.startTop];
- 	},
-
- 	getStartPosition: function() {
- 		return { x: this.options.startLeft, y:this.options.startTop};
- 	},
-
- 	getBotStartPosition: function() {
- 		return { x: this.options.canvasWidth + this.options.startLeft, y: this.options.canvasHeight + this.options.startTop };
- 	},	
-
- 	createRect: function(divisor, x, y) {
-		var h = Math.round(this.options.canvasHeight / this.options.divisor);
-    	var w = Math.round(this.options.canvasWidth / this.options.divisor);
-
-    	this.rects[x+'x'+y] = {
-	    	top: this.addLine(x,y, x+w,y),
-	    	right: this.addLine(x+w,y, x+w,y+h),
-	    	bottom: this.addLine(x+w,y+h,x,y+h),
-	    	left: this.addLine(x,y+h, x,y),
-	    	doneLines: [],
-	    	done:false,
-    	}
- 	},
-
- 	addLine: function(fromX, fromY, toX,toY) {
-    	var coordinate = [fromX,fromY].join('x');
-    	var targetcoordinate = [toX,toY].join('x');
-    	var line, lineIndex = [fromX,fromY,toX ,toY].join('x'), lineIndex2 = [toX ,toY,fromX,fromY].join('x');
-    	if (!(lineIndex in this.lines) && !(lineIndex2 in this.lines)) {
-    		this.lines[lineIndex] = this.lines[lineIndex2] = line = new Path.Line(new Point([fromX,fromY]), new Point([toX,toY]));
-    	} else {
-    		line = this.lines[lineIndex];
-    	}
-    	line.strokeColor = "#999";
-    	line.strokeWidth = 3;
-    	if(!(coordinate in this.connections)) {
-    		this.connections[coordinate] = { };
-    	}
-    	if(!(targetcoordinate in this.connections)) {
-    		this.connections[targetcoordinate] = { };
-    	}
-    	if (toX > fromX && toY == fromY) {
-    		this.connections[coordinate].right = [fromX, fromY, toX,toY, line];
-    		this.connections[targetcoordinate].left = [toX,toY, fromX, fromY, line];
-    	} else if (toX < fromX && toY == fromY) {
-    		this.connections[coordinate].left = [fromX, fromY, toX,toY, line];
-    		this.connections[targetcoordinate].right = [ toX,toY, fromX, fromY, line];
-    	} else if (fromX == toX && fromY < toY) {
-    		this.connections[coordinate].down =  [fromX, fromY, toX,toY, line];
-    		this.connections[targetcoordinate].up =  [ toX,toY, fromX, fromY, line];
-    	} else if (fromX == toX && fromY > toY) {
-    		this.connections[coordinate].up = [fromX, fromY, toX,toY, line];
-    		this.connections[targetcoordinate].down = [toX,toY, fromX, fromY, line];
-    	} else {
-    		console.log(" Dunno where to put this: : " , x, y, fromX, fromY, path);
-    	}
-
-    	return line;
-    },
-
-    markLineDone: function(connection) {
-    	console.log(" mark line done!" , connection);
-    	var line = connection[4];
-		for(var i in this.rects) {
-			['top','bottom','left','right'].map(function(direction) {
-				//console.log(rects[i][direction])
-				if(!this.rects[i].done &&
-					(
-					   (this.rects[i][direction].getSegments()[0].toString() == line.getSegments()[0].toString() &&
-					 	 this.rects[i][direction].getSegments()[1].toString() == line.getSegments()[1].toString())
-					 	|| 
-						(this.rects[i][direction].getSegments()[1].toString() == line.getSegments()[0].toString() &&
-					 	 this.rects[i][direction].getSegments()[0].toString() == line.getSegments()[1].toString()) 
-					)  && this.rects[i].doneLines.indexOf(direction) == -1) {
-						this.rects[i].doneLines.push(direction);
-
-					if(this.rects[i].doneLines.length == 4) {
-
-						this.markRectDone(i);
-					}
-				}
-			}, this)
-		}
-		line.strokeColor = "#F0F";
-    },
-
-    getLowerPoint:function(rect) {
-    	var s = rect.getSegments();
-		return s[0].point.y < s[1].point.y ? s[0].point : s[1].point
-    },
-
-    getHigherPoint:function(rect) {
-    	var s = rect.getSegments();
-		return s[0].point.y > s[1].point.y ? s[0].point : s[1].point
-    },
-
-    markRectDone: function(index) {
-    	this.rects[index].done = true;
-		var p = new Shape.Rectangle(this.getLowerPoint(this.rects[index].left), 
-									this.getHigherPoint(this.rects[index].right));
-		p.fillColor = '#abcdef';
-		p.strokeColor ='blue';
-		p.sendToBack();
-    }
-
-
- });
-
- function markRectDone(index) {
-    	rects[index].top.strokeColor = "#F0F";
-    	rects[index].left.strokeColor = "#F0F";
-    	rects[index].bottom.strokeColor = "#F0F";
-    	rects[index].right.strokeColor = "#F0F";
-    } 
-
-   function getPathData(rect) {
-    	console.log(
-			rects[rect].left.getSegments()[0].point.x+','+rects[rect].left.getSegments()[0].point.y+'->'+rects[rect].left.getSegments()[1].point.x+','+rects[rect].left.getSegments()[1].point.y+"\n"+
-			rects[rect].top.getSegments()[0].point.x+','+rects[rect].top.getSegments()[0].point.y+'->'+rects[rect].top.getSegments()[1].point.x+','+rects[rect].top.getSegments()[1].point.y+"\n"+
-			rects[rect].right.getSegments()[0].point.x+','+rects[rect].right.getSegments()[0].point.y+'->'+rects[rect].right.getSegments()[1].point.x+','+rects[rect].right.getSegments()[1].point.y+"\n"+
-			rects[rect].bottom.getSegments()[0].point.x+','+rects[rect].bottom.getSegments()[0].point.y+'->'+rects[rect].bottom.getSegments()[1].point.x+','+rects[rect].bottom.getSegments()[1].point.y+"\n"
-
-		)
-
-	}
-
-
 
 
 </script>	
