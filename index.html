@@ -42,9 +42,9 @@ Array.random = function (myArray) {
 		 		case 'up':
 		 		case 'down':
 		 		console.log('found!' , event.key);
-		 		this.direction = event.key;
-		 		this.fireEvent('change', [this.direction]);
-		  		event.stop();
+    		 		this.direction = event.key;
+    		 		this.fireEvent('change', [this.direction]);
+    		  		event.stop();
 		 		break;
 		 	}
 		}.bind(this));
@@ -153,7 +153,7 @@ Array.random = function (myArray) {
  	},
 
  	options: {
- 		steps: 20
+ 		steps: 5    
  	},
 
 
@@ -184,6 +184,15 @@ Array.random = function (myArray) {
 
  	setDirection: function(direction) {
  		console.log("Settingg direction" , direction);
+        if(!(direction in this.target)) {
+            console.log(" Impossible direction change:" , direction)
+            if(this.nextDirection) {
+                var d = this.nextDirection;
+                this.nextDirection = null;
+                return this.setDirection(d);
+            }
+            return;
+        }
  		this.direction = direction;
  		var t = this.target[direction];
 
@@ -192,7 +201,7 @@ Array.random = function (myArray) {
 
         this.directionX = (this.target[this.direction][0] - this.avatar.position.x)/this.options.steps;
         this.directionY = (this.target[this.direction][1] - this.avatar.position.y)/this.options.steps;
-        console.log("Direction set: ", this.avatar.position.x,this.avatar.position.y, this.directionX, this.directionY, this.target[this.direction]);
+        console.log("Direction set: ", this.options.steps, this.avatar.position.x,this.avatar.position.y, this.directionX, this.directionY, this.target[this.direction]);
  	},
 
 
@@ -206,23 +215,46 @@ Array.random = function (myArray) {
  			
  		}
  		if(!(this.direction in this.target)) {
+            console.log(" No direction ", this.direction, ' in ', this.target);
  			return;
  		}
- 		if (this.avatar.position.x == this.target[this.direction][0] && this.avatar.position.y == this.target[this.direction][1]) {
-        	console.log(" Find a new target!" , this.target);
+        var dx = this.directionX, dy = this.directionY, ax = this.avatar.position.x, ay = this.avatar.position.y, tx = this.target[this.direction][0], ty = this.target[this.direction][1];
+
+        if (
+            ((dx == 0 && dy < 0 && ay <= ty) ||
+            (dx == 0 && dy > 0 && ay >= ty) ||
+            (dx <= 0 && dy == 0 && ay <= ty) ||
+            (dx >= 0 && dy == 0 && ay >= ty) ) && (
+            (dy == 0 && dx < 0 && ax <= tx) ||
+            (dy == 0 && dx > 0 && ax >= tx) ||
+            (dy <= 0 && dx == 0 && ax <= tx) ||
+            (dy >= 0 && dx == 0 && ax >= tx))) {
+
+           console.log(" Find a new target!" , this.target);
+            this.avatar.position.x = this.target[this.direction][0];
+            this.avatar.position.y = this.target[this.direction][1];
+            
         	this.fireEvent('line:done', [this.getTarget()]);
         	
  			if(this.nextDirection) {
 	 			this.setDirection(this.nextDirection);
 		    	this.nextDirection = false;
 	    	}
-        	return;
-        	//if(typeof this.fastEvents['line:done'] == 'function') {
-        	//	this.fastEvents['line:done'](this.getTarget());
-        	//}
+            return;
+        	
+        } else {
+            console.log(" No match: ", 
+                this.avatar.position.x,
+                this.target[this.direction][0], 
+                this.directionX,
+                this.avatar.position.y,
+                this.target[this.direction][1], 
+                this.directionY
+                );
         }
 
         // do the movement
+
         this.avatar.position.x += this.directionX;
         this.avatar.position.y += this.directionY;
     }
