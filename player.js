@@ -8,7 +8,7 @@
  	directionY: 0,
 
  	options: {
- 		steps: 5,
+ 		steps: 20,
         color: '#00F',
         strokeWidth: 4
  	},
