@@ -19,11 +19,11 @@
             this.update();
             if(this.lives == 0) {
                 this.gameover = true;
-                game.fireEvent('game:over');
+                this.fireEvent('game:over');
             } else {
-                game.fireEvent('live:lost');
+                this.fireEvent('life:lost');
                 game.bot.setPosition(game.grid.getBotStartPosition());
-                game.bot.setTarget(game.grid.getBotStartGridPoint(), 'left');
+                game.bot.setTarget(game.grid.getBotStartGridPoint(), Array.random(['left','up']));
                 game.player.setPosition(game.grid.getStartPosition());
                 game.player.setTarget(game.grid.getStartGridPoint(),'up');
                 game.player.direction = 'up';
@@ -60,6 +60,9 @@
  		this.setOptions(options,this.options);
  		console.log(" Game class initialized!" );
         this.score = new Score(this);
+        this.score.addEvent('game:over', function() {
+            $('gameover').setStyle('display','block');
+        })
  		this.grid = new Grid(options.grid);
  		this.bot = new Player({
  			steps: 30,
@@ -140,7 +143,7 @@
        var b = this.bot.avatar.position;
        var pdx = p.x > b.x ? parseInt(p.x - b.x) : parseInt(b.x - p.x) ;
        var pdy = p.y > p.y ? parseInt(p.y - b.y) : parseInt(b.y - p.y);
-       return pdx > -5 && pdx < 5  && pdy > -5 && pdy < 5
+       return pdx > -10 && pdx < 10  && pdy > -10 && pdy < 10
     },
 
  	gameStep: function(event) {

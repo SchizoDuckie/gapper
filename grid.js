@@ -61,6 +61,7 @@ var Grid = new Class({
             score: 50,
 	    	doneLines: [],
 	    	done:false,
+            el: new Element('div', { styles: {  top: y+2, width: w-4, left: x+2, height:h-4, lineHeight: h - 4  }}).addClass('block').set('html', 50 ).inject('gameDecor')
     	}
  	},
 
@@ -137,12 +138,7 @@ var Grid = new Class({
     },
 
     markRectDone: function(index) {
-    	this.rects[index].done = true;
-		var p = new Shape.Rectangle(this.getLowerPoint(this.rects[index].left), 
-									this.getHigherPoint(this.rects[index].right));
-		p.fillColor = '#abcdef';
-		p.strokeColor ='blue';
-		p.sendToBack();
+    	this.rects[index].el.addClass('done')
         this.fireEvent('rect:done', [index,this.rects[index]]);
     }
 
